@@ -2,13 +2,23 @@
 
 Adaptive fan control for the Lenovo ThinkServer RD450X. With CPUs outside the factory configuration, the BMC keeps every fan at 100% regardless of temperature.
 
-Every 5 seconds the service takes the highest IPMI temperature reading and sets all fans with the OEM command `ipmitool raw 0x2e 0x30 0x00 <fan> <pwm>`:
+Every 5 seconds the service reads all IPMI sensors in one call (with a cached SDR, ~0.3 s) and sets all fans with the OEM command `ipmitool raw 0x2e 0x30 0x00 <fan> <pwm>`:
 
-- up to `T_LOW` (60 °C): `MIN_PWM` (30%);
-- from `T_LOW` to `T_HIGH` (75 °C): linear ramp to 100%;
-- above `T_HIGH`, or when sensors cannot be read: 100%;
-- ramps down by at most `STEP_DOWN` (5%) per cycle;
-- on stop or crash: 100%.
+- each sensor group has its own curve, from `MIN_PWM` (30%) to 100%; the group demanding the most wins:
+
+  | Sensors | MIN_PWM up to | 100% at |
+  |---|---|---|
+  | CPU1/CPU2 | 65 °C | 80 °C |
+  | CPU and DIMM VRs | 70 °C | 90 °C |
+  | DIMMs | 70 °C | 85 °C |
+  | PCH | 65 °C | 85 °C |
+  | System, Outlet | 60 °C | 70 °C |
+  | HDD (board sensor) | 62 °C | 72 °C |
+
+- ramps up immediately; ramps down only once temperatures are `HYSTERESIS` (3 °C) below the current point, by at most `STEP_DOWN` (5%) per cycle;
+- 100% when sensors cannot be read or any of System Fan1–3 drops below the critical threshold (stalled fan);
+- every `ipmitool` call has a `IPMI_TIMEOUT` (10 s); a systemd watchdog (60 s) restarts the service if it hangs;
+- 100% on stop, crash or watchdog kill.
 
 On start it lowers the System Fan1–3 thresholds to 164/246 RPM (critical/non-critical): the stock 820/492 RPM thresholds fire at any duty below ~55%.
 
@@ -36,7 +46,7 @@ systemctl enable --now rd450x-fan
 journalctl -u rd450x-fan -f
 ```
 
-Parameters can be overridden in `/etc/default/rd450x-fan`, e.g. `MIN_PWM=25`.
+Parameters can be overridden in `/etc/default/rd450x-fan`: `MIN_PWM`, `STEP_DOWN`, `HYSTERESIS`, `INTERVAL`, `IPMI_TIMEOUT`. Curves are the `CURVES` table in the script.
 
 ## Rollback
 

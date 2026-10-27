@@ -3,6 +3,9 @@ Description=RD450X temperature-driven fan control
 After=systemd-modules-load.service
 
 [Service]
+Type=notify
+NotifyAccess=all
+WatchdogSec=60
 EnvironmentFile=-/etc/default/rd450x-fan
 ExecStart=/usr/local/sbin/rd450x-fan.sh
 ExecStopPost=/usr/bin/ipmitool raw 0x2e 0x30 0x00 0x00 0x64
