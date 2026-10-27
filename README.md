@@ -50,3 +50,7 @@ for f in 1 2 3; do ipmitool sensor thresh "System Fan$f" lcr 492; ipmitool senso
 - [Hackmag: Building a PC with a Lenovo RD450X Server Motherboard](https://hackmag.com/security/lenovo-rd450x-pc)
 - [32fca06c/rd450x_pwmcontrol](https://github.com/32fca06c/rd450x_pwmcontrol)
 - [Vabavia/rd450x-fan-control](https://github.com/Vabavia/rd450x-fan-control)
+
+## License
+
+MIT, see [LICENSE](LICENSE).
