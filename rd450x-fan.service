@@ -1,0 +1,13 @@
+[Unit]
+Description=RD450X temperature-driven fan control
+After=systemd-modules-load.service
+
+[Service]
+EnvironmentFile=-/etc/default/rd450x-fan
+ExecStart=/usr/local/sbin/rd450x-fan.sh
+ExecStopPost=/usr/bin/ipmitool raw 0x2e 0x30 0x00 0x00 0x64
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
